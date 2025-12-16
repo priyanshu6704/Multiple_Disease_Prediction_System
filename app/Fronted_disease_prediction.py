@@ -13,7 +13,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Load models and scalers ---
+#Load models and scalers 
 @st.cache_resource
 def load_diabetes_models():
     try:
@@ -88,7 +88,7 @@ diabetes_models = load_diabetes_models()
 heart_models = load_heart_models()
 kidney_models = load_kidney_models()
 
-# --- Test data for performance metrics ---
+#Test data for performance metrics
 # Sample test data with actual metrics from your notebooks
 TEST_DATA = {
     'diabetes': {
@@ -144,7 +144,7 @@ TEST_DATA = {
     }
 }
 
-# --- Sidebar Navigation ---
+#Sidebar Navigation
 st.sidebar.title("🏥  Multiple Disease Prediction System")
 st.sidebar.markdown("---")
 
@@ -155,7 +155,7 @@ disease_option = st.sidebar.radio(
     index=0
 )
 
-# --- Sidebar: Model Performance Display ---
+#Sidebar: Model Performance Display
 st.sidebar.markdown("---")
 st.sidebar.subheader("📊 Model Performance")
 
@@ -464,7 +464,7 @@ elif disease_option == "Kidney Disease" and kidney_models['loaded']:
             )
             st.pyplot(fig_roc_dt)
 
-# --- Main Content Area: Prediction Forms ---
+#Main Content Area: Prediction Forms
 st.title(f"🩺 {disease_option} Prediction")
 
 if disease_option == "Diabetes":
@@ -832,7 +832,7 @@ elif disease_option == "Kidney Disease":
                 st.error(f"Error during prediction: {str(e)}")
                 st.info("Note: For best results, ensure all 25 features match the training data format.")
 
-# --- Footer ---
+#Footer
 st.markdown("---")
 st.markdown("""
 **Disclaimer:** This tool provides predictions based on machine learning models and should not be used as a substitute for professional medical advice, diagnosis, or treatment.
