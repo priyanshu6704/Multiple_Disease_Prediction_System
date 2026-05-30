@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+
+  frontend:
+    build: ./frontend
+    container_name: disease-frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    networks:
+      - ml-network
+
+  backend:
+    build: ./backend
+    container_name: disease-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - model
+    networks:
+      - ml-network
+
+  model:
+    build: ./models
+    container_name: disease-model
+    ports:
+      - "8000:8000"
+    networks:
+      - ml-network
+
+networks:
+  ml-network:
+    driver: bridge
