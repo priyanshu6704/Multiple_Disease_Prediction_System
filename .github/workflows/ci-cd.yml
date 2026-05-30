@@ -11,53 +11,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Set up Docker
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Build images
       - name: Build Docker Images
-        run: |
-          docker-compose build
+        run: docker compose build
 
-      # 4. Start containers
       - name: Start Containers
         run: |
-          docker-compose up -d
-          sleep 25
+          docker compose up -d
+          for i in {1..10}; do
+            curl http://localhost:5000/ && break
+            echo "Waiting for backend..."
+            sleep 5
+          done
 
-      # 5. Test backend health
       - name: Test Backend Health
-        run: |
-          curl http://localhost:5000/
+        run: curl http://localhost:5000/
 
-      # 6. Test Diabetes API
       - name: Test Diabetes Prediction
         run: |
           curl -X POST http://localhost:5000/predict/diabetes \
           -H "Content-Type: application/json" \
           -d "{\"features\": [1,2,3,4,5,6,7,8]}"
 
-      # 7. Test Heart API
       - name: Test Heart Prediction
         run: |
           curl -X POST http://localhost:5000/predict/heart \
           -H "Content-Type: application/json" \
           -d "{\"features\": [50,1,2,120,200]}"
 
-      # 8. Test Kidney API
       - name: Test Kidney Prediction
         run: |
           curl -X POST http://localhost:5000/predict/kidney \
           -H "Content-Type: application/json" \
           -d "{\"features\": [50,80,1.0,12.0]}"
 
-      # 9. Stop containers
       - name: Cleanup
         if: always()
-        run: |
-          docker-compose down
+        run: docker compose down
