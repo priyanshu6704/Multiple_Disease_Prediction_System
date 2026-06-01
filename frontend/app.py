@@ -37,6 +37,7 @@ if choice == "Diabetes":
         bmi = st.number_input("BMI", 10.0, 70.0, 25.0)
         hba1c = st.number_input("HbA1c", 3.0, 20.0, 5.5)
         glucose = st.number_input("Glucose", 50, 400, 100)
+        abcd=st.selectbox("ABCD", [0, 1])
 
         submit = st.form_submit_button("Predict")
 
