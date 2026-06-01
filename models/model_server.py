@@ -7,79 +7,112 @@ app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
 # ---------------- LOAD MODELS ----------------
 
-# Diabetes models
+# Diabetes
 diabetes_log = joblib.load(os.path.join(BASE_DIR, "diabetes/diabetes_logistic_regression.pkl"))
 diabetes_rf = joblib.load(os.path.join(BASE_DIR, "diabetes/diabetes_random_forest.pkl"))
 diabetes_scaler = joblib.load(os.path.join(BASE_DIR, "diabetes/diabetes_scaler.pkl"))
 
-
-# Heart models
+# Heart
 heart_knn = joblib.load(os.path.join(BASE_DIR, "heart/heart_knn_model.pkl"))
 heart_svm = joblib.load(os.path.join(BASE_DIR, "heart/heart_svm_model.pkl"))
 heart_scaler = joblib.load(os.path.join(BASE_DIR, "heart/heart_scaler.pkl"))
 
-
-# Kidney models
+# Kidney
 kidney_nb = joblib.load(os.path.join(BASE_DIR, "kidney/kidney_naive_bayes.pkl"))
 kidney_dt = joblib.load(os.path.join(BASE_DIR, "kidney/kidney_decision_tree.pkl"))
 kidney_scaler = joblib.load(os.path.join(BASE_DIR, "kidney/kidney_scaler.pkl"))
+
+
+# ---------------- SAFE HELPER ----------------
+
+def safe_get_features():
+    data = request.get_json()
+
+    if not data or "features" not in data:
+        return None, jsonify({"error": "Missing features"}), 400
+
+    try:
+        features = data["features"]
+        X = np.array([features], dtype=float)
+        return X, None, None
+
+    except Exception as e:
+        return None, jsonify({"error": str(e)}), 400
 
 
 # ---------------- DIABETES ----------------
 
 @app.route("/diabetes", methods=["POST"])
 def diabetes():
-    data = request.json.get("features")
+    X, err, code = safe_get_features()
+    if err:
+        return err, code
 
-    if not data:
-        return jsonify({"error": "Missing features"}), 400
+    try:
+        X = diabetes_scaler.transform(X)
 
-    X = np.array([data])
-    X = diabetes_scaler.transform(X)
+        return jsonify({
+            "logistic_regression": int(diabetes_log.predict(X)[0]),
+            "random_forest": int(diabetes_rf.predict(X)[0])
+        })
 
-    return jsonify({
-        "logistic_regression": int(diabetes_log.predict(X)[0]),
-        "random_forest": int(diabetes_rf.predict(X)[0])
-    })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------- HEART ----------------
 
 @app.route("/heart", methods=["POST"])
 def heart():
-    data = request.json.get("features")
+    X, err, code = safe_get_features()
+    if err:
+        return err, code
 
-    if not data:
-        return jsonify({"error": "Missing features"}), 400
+    try:
+        # FIX: prevents feature mismatch crash
+        expected = heart_scaler.n_features_in_
+        if X.shape[1] != expected:
+            return jsonify({
+                "error": f"Heart model expects {expected} features, got {X.shape[1]}"
+            }), 400
 
-    X = np.array([data])
-    X = heart_scaler.transform(X)
+        X = heart_scaler.transform(X)
 
-    return jsonify({
-        "knn": int(heart_knn.predict(X)[0]),
-        "svm": int(heart_svm.predict(X)[0])
-    })
+        return jsonify({
+            "knn": int(heart_knn.predict(X)[0]),
+            "svm": int(heart_svm.predict(X)[0])
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------- KIDNEY ----------------
 
 @app.route("/kidney", methods=["POST"])
 def kidney():
-    data = request.json.get("features")
+    X, err, code = safe_get_features()
+    if err:
+        return err, code
 
-    if not data:
-        return jsonify({"error": "Missing features"}), 400
+    try:
+        expected = kidney_scaler.n_features_in_
+        if X.shape[1] != expected:
+            return jsonify({
+                "error": f"Kidney model expects {expected} features, got {X.shape[1]}"
+            }), 400
 
-    X = np.array([data])
-    X = kidney_scaler.transform(X)
+        X = kidney_scaler.transform(X)
 
-    return jsonify({
-        "naive_bayes": int(kidney_nb.predict(X)[0]),
-        "decision_tree": int(kidney_dt.predict(X)[0])
-    })
+        return jsonify({
+            "naive_bayes": int(kidney_nb.predict(X)[0]),
+            "decision_tree": int(kidney_dt.predict(X)[0])
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ---------------- HEALTH CHECK ----------------
